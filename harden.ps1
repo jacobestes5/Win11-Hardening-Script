@@ -17,6 +17,29 @@ function Enable-Updates {
 
 function User-Auditing {
     Write-Host "`n--- Starting: User Auditing ---`n"
+      function User-Auditing {
+        Write-Host "`n--- Starting: User Auditing ---`n"
+    
+        # Get all local user accounts except built-in accounts
+        $users = Get-LocalUser | Where-Object { $_.Name -ne "Administrator" -and $_.Name -ne "DefaultAccount" -and $_.Name -ne "Guest" -and $_.Name -ne "WDAGUtilityAccount" }
+    
+        foreach ($user in $users) {
+            $prompt = "Is '$($user.Name)' an Authorized User? [Y/n]: "
+            $answer = Read-Host -Prompt $prompt
+    
+            if ($answer -eq "" -or $answer -match "^[Yy]$") {
+                Write-Host "'$($user.Name)' kept."
+            } elseif ($answer -match "^[Nn]$") {
+                try {
+                    Remove-LocalUser -Name $user.Name -ErrorAction Stop
+                    Write-Host "'$($user.Name)' has been deleted." -ForegroundColor Red
+                } catch {
+                    Write-Host "Failed to delete '$($user.Name)': $_" -ForegroundColor Yellow
+                }
+            } else {
+                Write-Host "Invalid input. Keeping '$($user.Name)'."
+            }
+        }  
 }
 
 # Menu loop
