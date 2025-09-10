@@ -14,7 +14,6 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 }
 
 # ...existing code...
-# Define menu options
 $menuOptions = @(
     "Document the system",
     "Enable updates",
@@ -30,8 +29,6 @@ function Document-System {
 function Enable-Updates {
     Write-Host "`n--- Starting: Enable updates ---`n"
 }
-
-# ...existing code...
 
 function User-Auditing {
     Write-Host "`n--- Starting: User Auditing ---`n"
@@ -56,10 +53,33 @@ function User-Auditing {
             Write-Host "Invalid input. Keeping '$($user.Name)'."
         }
     }
+
+    Write-Host "`n--- Starting: Administrator Group Auditing ---`n"
+
+    # Get all members of the local Administrators group
+    $adminGroup = [ADSI]"WinNT://./Administrators,group"
+    $members = @($adminGroup.psbase.Invoke("Members")) | ForEach-Object {
+        $_.GetType().InvokeMember("Name", 'GetProperty', $null, $_, $null)
+    }
+
+    foreach ($member in $members) {
+        $prompt = "Is '$member' an Authorized Administrator? [Y/n]: "
+        $answer = Read-Host -Prompt $prompt
+
+        if ($answer -eq "" -or $answer -match "^[Yy]$") {
+            Write-Host "'$member' kept in Administrators group."
+        } elseif ($answer -match "^[Nn]$") {
+            try {
+                net localgroup Administrators "$member" /delete
+                Write-Host "'$member' has been removed from Administrators group." -ForegroundColor Red
+            } catch {
+                Write-Host "Failed to remove '$member': $_" -ForegroundColor Yellow
+            }
+        } else {
+            Write-Host "Invalid input. Keeping '$member' in Administrators group."
+        }
+    }
 }
-
-# ...existing code...
-
 
 # Menu loop
 :menu do {
@@ -70,11 +90,11 @@ function User-Auditing {
 
     $selection = Read-Host "`nEnter the number of your choice"
 
-    switch ($selection) {
-        "1" { Document-System }
-        "2" { Enable-Updates }
-        "3" { User-Auditing }
-        "4" { Write-Host "`nExiting..."; break menu }  # leave the do{} loop
-        default { Write-Host "`nInvalid selection. Please try again." }
-    }
-} while ($true)
+switch ($selection) {
+    "1" { Document-System }
+    "2" { Enable-Updates }
+    "3" { User-Auditing }
+    "4" { Write-Host "`nExiting..."; break menu }
+    default { Write-Host "`nInvalid selection. Please try again." }
+}
+}
