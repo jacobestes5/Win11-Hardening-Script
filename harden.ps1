@@ -1,3 +1,19 @@
+# Check for Administrator privileges and relaunch if needed
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Host "Script is not running as Administrator. Attempting to relaunch with elevated privileges..."
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = "powershell.exe"
+    $psi.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+    $psi.Verb = "runas"
+    try {
+        [System.Diagnostics.Process]::Start($psi) | Out-Null
+    } catch {
+        Write-Host "Failed to restart as Administrator. Exiting."
+    }
+    exit
+}
+
+# ...existing code...
 # Define menu options
 $menuOptions = @(
     "Document the system",
@@ -18,6 +34,7 @@ function Enable-Updates {
 function User-Auditing {
     Write-Host "`n--- Starting: User Auditing ---`n"
       function User-Auditing {
+           function User-Auditing {
         Write-Host "`n--- Starting: User Auditing ---`n"
     
         # Get all local user accounts except built-in accounts
@@ -39,7 +56,8 @@ function User-Auditing {
             } else {
                 Write-Host "Invalid input. Keeping '$($user.Name)'."
             }
-        }  
+        }
+    }
 }
 
 # Menu loop
