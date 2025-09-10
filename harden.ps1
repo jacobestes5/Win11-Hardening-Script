@@ -82,7 +82,8 @@ function User-Auditing {
 }
 
 # Menu loop
-:menu do {
+$exit = $false
+while (-not $exit) {
     Write-Host "`nSelect an option:`n"
     for ($i = 0; $i -lt $menuOptions.Count; $i++) {
         Write-Host "$($i + 1). $($menuOptions[$i])"
@@ -90,11 +91,11 @@ function User-Auditing {
 
     $selection = Read-Host "`nEnter the number of your choice"
 
-switch ($selection) {
-    "1" { Document-System }
-    "2" { Enable-Updates }
-    "3" { User-Auditing }
-    "4" { Write-Host "`nExiting..."; break menu }
-    default { Write-Host "`nInvalid selection. Please try again." }
-}
+    switch ($selection) {
+        "1" { Document-System }
+        "2" { Enable-Updates }
+        "3" { User-Auditing }
+        "4" { Write-Host "`nExiting..."; $exit = $true }
+        default { Write-Host "`nInvalid selection. Please try again." }
+    }
 }
