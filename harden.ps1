@@ -18,6 +18,17 @@ $menuOptions = @(
     "Document the system",
     "Enable updates",
     "User Auditing",
+    "Account Policies",
+    "Local Policies",
+    "Defensive Countermeasures",
+    "Uncategorized OS Settings",
+    "Service Auditing",
+    "OS Updates",
+    "Application Updates",
+    "Prohibited Files",
+    "Unwanted Software",
+    "Malware"
+    "Application Security Settings"
     "Exit"
 )
 
@@ -81,6 +92,51 @@ function User-Auditing {
     }
 }
 
+function Account-Policies {
+    Write-Host "`n--- Starting: Account Policies ---`n"
+}
+
+function Local-Policies {
+    Write-Host "`n--- Starting: Local Policies ---`n"
+}
+
+function Defensive-Countermeasures {
+    Write-Host "`n--- Starting: Defensive Countermeasures ---`n"
+}
+
+function Uncategorized-OS-Settings {
+    Write-Host "`n--- Starting: Uncategorized OS Settings ---`n"
+}
+
+function Service-Auditing {
+    Write-Host "`n--- Starting: Service Auditing ---`n"
+}
+
+function OS-Updates {
+    Write-Host "`n--- Starting: OS Updates ---`n"
+}
+
+function Application-Updates {
+    Write-Host "`n--- Starting: Application Updates ---`n"
+}
+
+function Prohibited-Files {
+    Write-Host "`n--- Starting: Prohibited Files ---`n"
+}
+
+function Unwanted-Software {
+    Write-Host "`n--- Starting: Unwanted Software ---`n"
+}
+
+function Malware {
+    Write-Host "`n--- Starting: Malware ---`n"
+}
+
+function Application-Security-Settings {
+    Write-Host "`n--- Starting: Application Security Settings ---`n"
+}
+
+
 # Menu loop
 $exit = $false
 while (-not $exit) {
@@ -95,7 +151,18 @@ while (-not $exit) {
         "1" { Document-System }
         "2" { Enable-Updates }
         "3" { User-Auditing }
-        "4" { Write-Host "`nExiting..."; $exit = $true }
+        "4" { Account-Policies }
+        "5" { Local-Policies }
+        "6" { Defensive-Countermeasures }
+        "7" { Uncategorized-OS-Settings }
+        "8" { Service-Auditing }
+        "9" { OS-Updates }
+        "10" { Application-Updates }
+        "11" { Prohibited-Files }   
+        "12" { Unwanted-Software }
+        "13" { Malware }
+        "14" { Application-Security-Settings }
+        "15" { Write-Host "`nExiting..."; $exit = $true }
         default { Write-Host "`nInvalid selection. Please try again." }
     }
 }
