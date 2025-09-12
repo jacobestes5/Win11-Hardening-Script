@@ -11,6 +11,14 @@ $LockoutThreshold  = 5    # bad logon attempts before lockout
 $LockoutDuration   = 10   # minutes an account remains locked
 $LockoutWindow     = 10   # minutes in which bad logons are counted
 $TempPassword      = '1CyberPatriot!' # temporary password for new or reset accounts
+
+# Color variables for consistent output styling
+$HeaderColor      = 'Cyan'       # For section headers
+$PromptColor      = 'Yellow'     # For user prompts
+$NameColor        = 'Green'      # For emphasized names
+$KeptColor        = 'Green'      # For "kept" lines
+$RemovedColor     = 'Red'        # For "removed" lines
+$WarningColor     = 'DarkYellow' # For warnings and errors
 # =======================
 # Variables Section - END
 # =======================
@@ -102,7 +110,42 @@ function User-Auditing {
             Write-Host "Invalid input. Keeping '$($user.Name)'."
         }
     }
+  param(
+        [Parameter(Mandatory=$true)]
+        [string]$GroupName
+    )
 
+    Write-Host "`n--- Reviewing members of group: $GroupName ---`n" -ForegroundColor $HeaderColor
+
+    try {
+        $members = Get-LocalGroupMember -Group $GroupName -ErrorAction Stop
+    } catch {
+        Write-Host "Warning: Could not get members of group '$GroupName'. $_" -ForegroundColor $WarningColor
+        return
+    }
+
+    foreach ($member in $members) {
+        Write-Host -NoNewline "Is " -ForegroundColor $PromptColor
+        Write-Host -NoNewline "$($member.Name)" -ForegroundColor $NameColor
+        Write-Host -NoNewline " authorized to be in " -ForegroundColor $PromptColor
+        Write-Host -NoNewline "$GroupName" -ForegroundColor $NameColor
+        Write-Host -NoNewline "? [Y/n] (default Y): " -ForegroundColor $PromptColor
+
+        $answer = Read-Host
+
+        if ($answer -eq "" -or $answer -match "^[Yy]") {
+            Write-Host "'$($member.Name)' kept in '$GroupName'." -ForegroundColor $KeptColor
+        } elseif ($answer -match "^[Nn]") {
+            try {
+                Remove-LocalGroupMember -Group $GroupName -Member $member.Name -ErrorAction Stop
+                Write-Host "'$($member.Name)' has been removed from '$GroupName'." -ForegroundColor $RemovedColor
+            } catch {
+                Write-Host "Warning: Failed to remove '$($member.Name)' from '$GroupName'. $_" -ForegroundColor $WarningColor
+            }
+        } else {
+            Write-Host "Invalid input. Keeping '$($member.Name)' in '$GroupName'." -ForegroundColor $WarningColor
+        }
+    }
     Write-Host "`n--- Starting: Administrator Group Auditing ---`n"
 
     # Get all members of the local Administrators group
