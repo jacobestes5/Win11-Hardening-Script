@@ -1,3 +1,28 @@
+# =========================
+# Variables Section - START
+# =========================
+$MaxPasswordAge    = 60   # maximum days before a password must be changed
+$MinPasswordAge    = 10   # minimum days a password must be used
+$MinPasswordLength = 10   # minimum length of passwords
+$PasswordHistory   = 20   # number of previous passwords remembered
+$LockoutThreshold  = 5    # bad logon attempts before lockout
+$LockoutDuration   = 10   # minutes an account remains locked
+$LockoutWindow     = 10   # minutes in which bad logons are counted
+# =======================
+# Variables Section - END
+# =======================
+
+
+# Single-line comment: This is a single-line comment at the top of the script
+
+<#
+Multi-line comment:
+This script provides a menu for Windows 11 hardening tasks.
+You can select options to perform various security actions.
+#>
+
+# Define the menu options
+
 # Check for Administrator privileges and relaunch if needed
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     Write-Host "Script is not running as Administrator. Attempting to relaunch with elevated privileges..."
@@ -94,6 +119,15 @@ function User-Auditing {
 
 function Account-Policies {
     Write-Host "`n--- Starting: Account Policies ---`n"
+    Write-Host "Setting maximum password age to $MaxPasswordAge days..."
+    net accounts /maxpwage:$MaxPasswordAge
+    $MaxPasswordAge    = 60   # maximum days before a password must be changed
+$MinPasswordAge    = 10   # minimum days a password must be used
+$MinPasswordLength = 10   # minimum length of passwords
+$PasswordHistory   = 20   # number of previous passwords remembered
+$LockoutThreshold  = 5    # bad logon attempts before lockout
+$LockoutDuration   = 10   # minutes an account remains locked
+$LockoutWindow     = 10   # minutes in which bad logons are counted
 }
 
 function Local-Policies {
