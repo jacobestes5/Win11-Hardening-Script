@@ -1,3 +1,5 @@
+
+# 
 # =========================
 # Variables Section - START
 # =========================
@@ -8,6 +10,7 @@ $PasswordHistory   = 20   # number of previous passwords remembered
 $LockoutThreshold  = 5    # bad logon attempts before lockout
 $LockoutDuration   = 10   # minutes an account remains locked
 $LockoutWindow     = 10   # minutes in which bad logons are counted
+$TempPassword      = '1CyberPatriot!' # temporary password for new or reset accounts
 # =======================
 # Variables Section - END
 # =======================
@@ -78,6 +81,16 @@ function User-Auditing {
 
         if ($answer -eq "" -or $answer -match "^[Yy]$") {
             Write-Host "'$($user.Name)' kept."
+            # Set password and require change at next logon
+            try {
+                Set-LocalUser -Name $user.Name -Password (ConvertTo-SecureString $TempPassword -AsPlainText -Force)
+                Set-LocalUser -Name $user.Name -PasswordNeverExpires $false
+                # Force password change at next logon
+                WMIC UserAccount Where "Name='$($user.Name)'" Set PasswordExpires=TRUE | Out-Null
+                Write-Host "Password for '$($user.Name)' set to temporary password and will require change at next logon." -ForegroundColor Cyan
+            } catch {
+                Write-Host "Failed to set password for '$($user.Name)': $_" -ForegroundColor Yellow
+            }
         } elseif ($answer -match "^[Nn]$") {
             try {
                 Remove-LocalUser -Name $user.Name -ErrorAction Stop
@@ -87,6 +100,32 @@ function User-Auditing {
             }
         } else {
             Write-Host "Invalid input. Keeping '$($user.Name)'."
+        }
+    }
+
+    Write-Host "`n--- Starting: Administrator Group Auditing ---`n"
+
+    # Get all members of the local Administrators group
+    $adminGroup = [ADSI]"WinNT://./Administrators,group"
+    $members = @($adminGroup.psbase.Invoke("Members")) | ForEach-Object {
+        $_.GetType().InvokeMember("Name", 'GetProperty', $null, $_, $null)
+    }
+
+    foreach ($member in $members) {
+        $prompt = "Is '$member' an Authorized Administrator? [Y/n]: "
+        $answer = Read-Host -Prompt $prompt
+
+        if ($answer -eq "" -or $answer -match "^[Yy]$") {
+            Write-Host "'$member' kept in Administrators group."
+        } elseif ($answer -match "^[Nn]$") {
+            try {
+                net localgroup Administrators "$member" /delete
+                Write-Host "'$member' has been removed from Administrators group." -ForegroundColor Red
+            } catch {
+                Write-Host "Failed to remove '$member': $_" -ForegroundColor Yellow
+            }
+        } else {
+            Write-Host "Invalid input. Keeping '$member' in Administrators group."
         }
     }
 
@@ -133,9 +172,8 @@ function Account-Policies {
     Write-Host "Setting account lockout duration to $LockoutDuration minutes..."
     net accounts /lockoutduration:$LockoutDuration
     Write-Host "Setting account lockout window to $LockoutWindow minutes..."
-
     net accounts /lockoutwindow:$LockoutWindow
-    
+
 }
 
 function Local-Policies {
