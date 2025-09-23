@@ -19,10 +19,41 @@ $NameColor        = 'Green'      # For emphasized names
 $KeptColor        = 'Green'      # For "kept" lines
 $RemovedColor     = 'Red'        # For "removed" lines
 $WarningColor     = 'DarkYellow' # For warnings and errors
+
+# Array of services to disable for security
+$# =========================
+# Variables Section - START
+# =========================
+$MaxPasswordAge    = 60   # maximum days before a password must be changed
+$MinPasswordAge    = 10   # minimum days a password must be used
+$MinPasswordLength = 10   # minimum length of passwords
+$PasswordHistory   = 20   # number of previous passwords remembered
+$LockoutThreshold  = 5    # bad logon attempts before lockout
+$LockoutDuration   = 10   # minutes an account remains locked
+$LockoutWindow     = 10   # minutes in which bad logons are counted
+$TempPassword      = '1CyberPatriot!' # temporary password for new or reset accounts
+
+# Color variables for consistent output styling
+$HeaderColor      = 'Cyan'       # For section headers
+$PromptColor      = 'Yellow'     # For user prompts
+$NameColor        = 'Green'      # For emphasized names
+$KeptColor        = 'Green'      # For "kept" lines
+$RemovedColor     = 'Red'        # For "removed" lines
+$WarningColor     = 'DarkYellow' # For warnings and errors
+
+# Array of services to disable for security
+$ServicesToDisable = @(
+    "BTAGService", "bthserv", "Browser", "MapsBroker", "lfsvc", "IISADMIN", "irmon", "lltdsvc", 
+    "LxssManager", "FTPSVC", "MSiSCSI", "sshd", "PNRPsvc", "p2psvc", "p2pimsvc", "PNRPAutoReg", 
+    "Spooler", "wercplsupport", "RasAuto", "SessionEnv", "TermService", "UmRdpService", "RpcLocator", 
+    "RemoteRegistry", "RemoteAccess", "LanmanServer", "simptcp", "SNMP", "sacsvr", "SSDPSRV", 
+    "upnphost", "WMSvc", "WerSvc", "Wecsvc", "WMPNetworkSvc", "icssvc", "WpnService", "PushToInstall", 
+    "WinRM", "W3SVC", "XboxGipSvc", "XblAuthManager", "XblGameSave", "XboxNetApiSvc", "NetTcpPortSharing",
+    "DNS", "LPDsvc", "RasMan", "SNMPTRAP", "TlntSvr", "TapiSrv", "WebClient", "LanmanWorkstation"
+)
 # =======================
 # Variables Section - END
 # =======================
-
 
 # Single-line comment: This is a single-line comment at the top of the script
 
@@ -71,6 +102,19 @@ $menuOptions = @(
 # Define functions for each option
 function Document-System {
     Write-Host "`n--- Starting: Document the system ---`n"
+    # Get the current username
+    $PUSER = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name.Split('\')[-1]
+
+    # Build the folder path
+    $docsPath = "C:\Users\$PUSER\Desktop\DOCS"
+
+    # Test if the folder exists, and create it if it does not
+    if (-not (Test-Path -Path $docsPath -PathType Container)) {
+    New-Item -Path $docsPath -ItemType Directory | Out-Null
+    Write-Host "Created folder: $docsPath" -ForegroundColor $KeptColor
+        } else {
+    Write-Host "Folder already exists: $docsPath" -
+    }
 }
 
 function Enable-Updates {
@@ -233,6 +277,20 @@ function Uncategorized-OS-Settings {
 
 function Service-Auditing {
     Write-Host "`n--- Starting: Service Auditing ---`n"
+    # Loop through each service in $ServicesToDisable, stop if running, and disable startup
+    foreach ($svc in $ServicesToDisable) {
+    try {
+        $service = Get-Service -Name $svc -ErrorAction Stop
+        if ($service.Status -eq 'Running') {
+            Write-Host "Stopping service: $svc..." -ForegroundColor $PromptColor
+            Stop-Service -Name $svc -Force
+        }
+        Write-Host "Disabling service: $svc..." -ForegroundColor $PromptColor
+        Set-Service -Name $svc -StartupType Disabled
+    } catch {
+        Write-Host "Warning: Service '$svc' not found or could not be modified. $_" -ForegroundColor $WarningColor
+         }
+    }
 }
 
 function OS-Updates {
